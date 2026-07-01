@@ -1,0 +1,11 @@
+from enum import Enum
+
+
+class CandidateClass(str, Enum):
+    RAW_CANDIDATE = "RAW_CANDIDATE"
+    DUPLICATE = "DUPLICATE"
+    REJECT = "REJECT"
+    REFERENCE = "REFERENCE"
+    BACKUP = "BACKUP"
+    RECOMMENDED_TOP_10 = "RECOMMENDED_TOP_10"
+    MAIN_SELECTED_3 = "MAIN_SELECTED_3"
