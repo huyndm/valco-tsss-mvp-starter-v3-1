@@ -12,7 +12,9 @@ class RawPoolLimitExceeded(Exception):
 
 
 def count_raw_candidates(session: Session, project_id: int) -> int:
-    return len(session.exec(select(RawCandidate).where(RawCandidate.project_id == project_id)).all())
+    return len(
+        session.exec(select(RawCandidate).where(RawCandidate.project_id == project_id)).all()
+    )
 
 
 def add_raw_candidate(
@@ -52,4 +54,6 @@ def add_raw_candidate(
 
 
 def list_raw_candidates(session: Session, project_id: int) -> list[RawCandidate]:
-    return list(session.exec(select(RawCandidate).where(RawCandidate.project_id == project_id)).all())
+    return list(
+        session.exec(select(RawCandidate).where(RawCandidate.project_id == project_id)).all()
+    )

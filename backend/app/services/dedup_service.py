@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from itertools import combinations
-from typing import Iterable
 
 from sqlmodel import Session
 
@@ -29,7 +29,9 @@ def _same_listing(a: RawCandidate, b: RawCandidate) -> tuple[bool, str]:
     return False, ""
 
 
-def detect_duplicates(session: Session, candidates: Iterable[RawCandidate], persist: bool = True) -> list[DuplicateResult]:
+def detect_duplicates(
+    session: Session, candidates: Iterable[RawCandidate], persist: bool = True
+) -> list[DuplicateResult]:
     ordered = sorted(candidates, key=lambda c: (c.created_at, c.id or 0))
     duplicates: list[DuplicateResult] = []
     already_flagged: set[int] = set()

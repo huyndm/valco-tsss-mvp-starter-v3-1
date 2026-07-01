@@ -8,7 +8,9 @@ def classify_adjustment(adjustment_ratio: float) -> str:
 
 
 def rank_top10(items: list[dict]) -> list[dict]:
-    ranked = sorted(items, key=lambda x: x.get("total_score", 0), reverse=True)[: settings.top_recommended_count]
+    ranked = sorted(items, key=lambda x: x.get("total_score", 0), reverse=True)[
+        : settings.top_recommended_count
+    ]
     for item in ranked:
         item["candidate_class"] = "RECOMMENDED_TOP_10"
     return ranked
@@ -18,7 +20,12 @@ def score_market_area(candidate_market_area: str | None, subject_market_area: st
     return 1.0 if candidate_market_area == subject_market_area else 0.0
 
 
-def score_land_type(candidate_land_type: str | None, candidate_planning_segment: str | None, subject_land_type: str, subject_planning_segment: str | None) -> float:
+def score_land_type(
+    candidate_land_type: str | None,
+    candidate_planning_segment: str | None,
+    subject_land_type: str,
+    subject_planning_segment: str | None,
+) -> float:
     if candidate_land_type != subject_land_type:
         return 0.0
     if subject_planning_segment and candidate_planning_segment != subject_planning_segment:
@@ -48,7 +55,12 @@ def score_adjustment_ratio(adjustment_ratio: float) -> float:
 def build_scoring_tuple(candidate, subject, adjustment_ratio: float) -> tuple[float, ...]:
     return (
         score_market_area(candidate.market_area, subject.market_area),
-        score_land_type(candidate.land_type, candidate.planning_segment, subject.land_type, subject.planning_segment),
+        score_land_type(
+            candidate.land_type,
+            candidate.planning_segment,
+            subject.land_type,
+            subject.planning_segment,
+        ),
         score_size(candidate.size_sqm, subject.size_sqm),
         score_unit_price(candidate.unit_price),
         score_source_link(candidate.source_url),

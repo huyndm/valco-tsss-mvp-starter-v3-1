@@ -1,13 +1,21 @@
-import json
 import pytest
 
 from app.config import settings
 from app.models.candidate import ExtractionResult
 from app.services.dedup_service import detect_duplicates
-from app.services.evidence_service import RawPoolLimitExceeded, add_raw_candidate, count_raw_candidates
+from app.services.evidence_service import (
+    RawPoolLimitExceeded,
+    add_raw_candidate,
+    count_raw_candidates,
+)
 from app.services.hard_filter_service import evaluate_hard_filter, run_hard_filter
 from app.services.llm_client import FreeLLMAPIClient, assert_no_direct_provider_url
-from app.services.scoring_service import build_scoring_tuple, insufficient_data_status, rank_eligible_candidates, rank_top10
+from app.services.scoring_service import (
+    build_scoring_tuple,
+    insufficient_data_status,
+    rank_eligible_candidates,
+    rank_top10,
+)
 from app.services.selection_service import InvalidFinal3Selection, select_final3
 
 
@@ -29,8 +37,28 @@ def test_raw_pool_cap(session, project, monkeypatch):
 
 
 def test_dedup_and_filter(session, project, subject_asset):
-    a = add_raw_candidate(session, project.id, source_url="https://x.com/1", market_area="District 2", land_type="ODT", planning_segment="residential", size_sqm=100, unit_price=50_000_000, source_quality="strong")
-    b = add_raw_candidate(session, project.id, source_url="https://x.com/1", market_area="District 2", land_type="ODT", planning_segment="residential", size_sqm=100, unit_price=50_000_000, source_quality="strong")
+    a = add_raw_candidate(
+        session,
+        project.id,
+        source_url="https://x.com/1",
+        market_area="District 2",
+        land_type="ODT",
+        planning_segment="residential",
+        size_sqm=100,
+        unit_price=50_000_000,
+        source_quality="strong",
+    )
+    b = add_raw_candidate(
+        session,
+        project.id,
+        source_url="https://x.com/1",
+        market_area="District 2",
+        land_type="ODT",
+        planning_segment="residential",
+        size_sqm=100,
+        unit_price=50_000_000,
+        source_quality="strong",
+    )
     duplicates = detect_duplicates(session, [a, b])
     assert len(duplicates) == 1
     assert b.candidate_class == "DUPLICATE"
@@ -40,7 +68,16 @@ def test_dedup_and_filter(session, project, subject_asset):
 
 
 def test_hard_filter_flags_adjustment(session, project, subject_asset):
-    candidate = add_raw_candidate(session, project.id, source_url="https://x.com/a", market_area="District 2", land_type="ODT", size_sqm=100, unit_price=1, source_quality="strong")
+    candidate = add_raw_candidate(
+        session,
+        project.id,
+        source_url="https://x.com/a",
+        market_area="District 2",
+        land_type="ODT",
+        size_sqm=100,
+        unit_price=1,
+        source_quality="strong",
+    )
     passed, flags, ratio = evaluate_hard_filter(candidate, subject_asset, adjustment_ratio=0.41)
     assert not passed
     assert "expected_adjustment_over_40pct" in flags
@@ -55,6 +92,7 @@ def test_scoring_and_insufficient_status(subject_asset):
         size_sqm = 100
         unit_price = 1
         source_url = "https://x.com"
+
     tup = build_scoring_tuple(Candidate(), subject_asset, 0.1)
     ranked = rank_eligible_candidates([{"id": 1, "score_tuple": tup}], limit=1)
     assert ranked[0]["candidate_class"] == "RECOMMENDED_TOP_10"
@@ -64,7 +102,16 @@ def test_scoring_and_insufficient_status(subject_asset):
 
 
 def test_final3_selection_and_stub_extraction(session, project, subject_asset):
-    candidate = add_raw_candidate(session, project.id, source_url="https://x.com/1", market_area="District 2", land_type="ODT", size_sqm=100, unit_price=1, source_quality="strong")
+    candidate = add_raw_candidate(
+        session,
+        project.id,
+        source_url="https://x.com/1",
+        market_area="District 2",
+        land_type="ODT",
+        size_sqm=100,
+        unit_price=1,
+        source_quality="strong",
+    )
     records = run_hard_filter(session, [candidate], subject_asset)
     selections = select_final3(session, project.id, [records[0].id], selected_by="analyst_a")
     assert selections[0].candidate_class == "MAIN_SELECTED_3"

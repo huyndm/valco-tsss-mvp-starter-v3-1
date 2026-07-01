@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class CandidateClass(str, Enum):
+class CandidateClass(StrEnum):
     RAW_CANDIDATE = "RAW_CANDIDATE"
     DUPLICATE = "DUPLICATE"
     REJECT = "REJECT"
