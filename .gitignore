@@ -1,8 +1,42 @@
-.venv/
+﻿# Python
 __pycache__/
 *.pyc
-*.db
-.env
-exports/
-node_modules/
+.pytest_cache/
+.ruff_cache/
+backend/.venv/
+.venv/
+
+# Node
 frontend/node_modules/
+frontend/dist/
+node_modules/
+dist/
+
+# Env / secrets
+.env
+*.env
+.env.*
+*.key
+*.pem
+*.secret
+
+# Database / local files
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated patch / diff / export
+_phase32_*
+_big_phase32_*
+patch_app.py
+patch_main.py
+_VALCO_BACKUPS/
+_VALCO_EXPORT*/
+_CLAUDE_HANDOFF*/
+*.zip
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

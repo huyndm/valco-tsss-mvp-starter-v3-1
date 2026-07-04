@@ -27,12 +27,35 @@ def score_land_type(
     candidate_planning_segment: str | None,
     subject_land_type: str,
     subject_planning_segment: str | None,
+    land_type_adjusted: dict,  # To track if land type adjustment has been applied
 ) -> float:
-    if candidate_land_type != subject_land_type:
+    LAND_CONVERSION_RATES = {
+        "residential": 1.0,
+        "ONT": 1.0,
+        "ODT": 1.0,
+        "dat_o": 1.0,
+        "dat o": 1.0,
+        "TMDV": 0.85,
+        "commercial_service": 0.85,
+        "SKC": 0.75,
+        "non_agricultural_production_business": 0.75,
+        "CLN": 0.60,
+        "perennial_crop": 0.60,
+    }
+
+    if candidate_land_type == subject_land_type:
+        if subject_planning_segment and candidate_planning_segment != subject_planning_segment:
+            return 0.5
+        return 1.0
+    else:
+        # Apply land conversion standards
+        candidate_rate = LAND_CONVERSION_RATES.get(candidate_land_type, 0.0)
+        subject_rate = LAND_CONVERSION_RATES.get(subject_land_type, 0.0)
+
+        if candidate_rate > 0 and subject_rate > 0:
+            land_type_adjusted["status"] = True  # Mark as adjusted
+            return candidate_rate / subject_rate
         return 0.0
-    if subject_planning_segment and candidate_planning_segment != subject_planning_segment:
-        return 0.5
-    return 1.0
 
 
 def score_size(candidate_size_sqm: float | None, subject_size_sqm: float) -> float:
@@ -55,6 +78,7 @@ def score_adjustment_ratio(adjustment_ratio: float) -> float:
 
 
 def build_scoring_tuple(candidate, subject, adjustment_ratio: float) -> tuple[float, ...]:
+    land_type_adjusted = {"status": False}
     return (
         score_market_area(candidate.market_area, subject.market_area),
         score_land_type(
@@ -62,6 +86,7 @@ def build_scoring_tuple(candidate, subject, adjustment_ratio: float) -> tuple[fl
             candidate.planning_segment,
             subject.land_type,
             subject.planning_segment,
+            land_type_adjusted,
         ),
         score_size(candidate.size_sqm, subject.size_sqm),
         score_unit_price(candidate.unit_price),
@@ -87,3 +112,9 @@ def insufficient_data_status(eligible_count: int) -> str:
     if eligible_count >= 3:
         return "PROVISIONAL_FINAL_3_ONLY"
     return "INSUFFICIENT_EXPAND_OR_ANALYST_DECISION"
+
+
+# VALCO_NO_DOUBLE_COUNT_LAND_TYPE_NOTE:
+# Land type conversion must not be applied twice.
+# Use assess_adjustment_ratio(..., land_type_already_adjusted=True)
+# when upstream conversion has already been applied.

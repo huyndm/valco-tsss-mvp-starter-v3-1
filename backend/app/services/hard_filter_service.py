@@ -6,6 +6,7 @@ from app.config import settings
 from app.models.candidate import EligibleCandidate, RawCandidate
 from app.models.enums import CandidateClass
 from app.models.project import SubjectAsset
+from app.services.valco_tsss_rules import assess_adjustment_ratio
 
 SCALE_TOLERANCE_RATIO = 0.5
 
@@ -22,6 +23,23 @@ def evaluate_hard_filter(
     adjustment_ratio: float | None = None,
 ) -> tuple[bool, list[str], float]:
     flags: list[str] = []
+
+    # ValCo guardrail: total adjustment ratio for each comparable must be < 40%.
+    # If an explicit adjustment_ratio is passed by caller, use it.
+    # Otherwise estimate deterministic ratio from size and land type conversion.
+    if adjustment_ratio is None:
+        assessment = assess_adjustment_ratio(
+            candidate_size=candidate.size_sqm,
+            subject_size=subject.size_sqm,
+            candidate_land_type=candidate.land_type,
+            subject_land_type=subject.land_type,
+            land_type_already_adjusted=False,
+        )
+        adjustment_ratio = assessment.total_adjustment_ratio
+        flags.extend(assessment.warnings)
+
+    if adjustment_ratio >= 0.40:
+        flags.append("total_adjustment_ratio_exceeds_or_equals_40_percent")
     if candidate.candidate_class == CandidateClass.DUPLICATE:
         flags.append("likely_duplicate")
     if not candidate.market_area or candidate.market_area != subject.market_area:
@@ -47,7 +65,13 @@ def evaluate_hard_filter(
     ratio = adjustment_ratio
     if ratio is None:
         ratio = estimate_adjustment_ratio(candidate, subject)
-    if ratio > settings.max_main_adjustment_ratio:
+    # Enforce total adjustment ratio control:
+    # total adjustment ratio for every comparable must be below 40%
+    # If >= 40%, candidate must be flagged or rejected according to existing service pattern
+    # Do not silently drop data
+    if (
+        ratio >= settings.max_main_adjustment_ratio
+    ):  # Assuming settings.max_main_adjustment_ratio is 0.4 (40%)
         flags.append("expected_adjustment_over_40pct")
     return len(flags) == 0, flags, ratio
 
